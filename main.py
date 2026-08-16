@@ -1,6 +1,8 @@
 import streamlit as st
 import os
 import time
+from dotenv import load_dotenv
+load_dotenv()
 import pandas as pd
 from services.auth.login_wall import render_login_wall
 from services.state.session_defaults import initial_session_defaults
@@ -28,6 +30,17 @@ def main():
     load_css(os.path.join(os.getcwd(), "static", "style.css"))
     inject_local_font(os.path.join(os.getcwd(), "static", "AdobeClean.otf"), "AdobeClean")
 
+    # Hide Streamlit default toolbar (Share, Deploy, GitHub buttons)
+    st.markdown("""
+        <style>
+            [data-testid="stToolbar"] {visibility: hidden !important;}
+            [data-testid="stDecoration"] {display: none !important;}
+            #MainMenu {visibility: hidden !important;}
+            footer {visibility: hidden !important;}
+        </style>
+    """, unsafe_allow_html=True)
+
+
     init_db()
 
     if not render_login_wall():
@@ -41,11 +54,14 @@ def main():
 
             if not api_key and hasattr(st, "secrets") and "GROQ_API_KEY" in st.secrets:
                 api_key = st.secrets["GROQ_API_KEY"]
-            
-            groq_client = Groq(api_key=api_key)
-            llm_coach = LLMCoach(groq_client)
-            tts = TextToSpeech()
-            st.session_state.voice_pipeline = VoicePipeline(llm_coach, tts)
+
+            if not api_key:
+                st.session_state.voice_pipeline = None
+            else:
+                groq_client = Groq(api_key=api_key)
+                llm_coach = LLMCoach(groq_client)
+                tts = TextToSpeech()
+                st.session_state.voice_pipeline = VoicePipeline(llm_coach, tts)
         except Exception as e:
             st.session_state.voice_pipeline = None
 
@@ -170,6 +186,7 @@ def main():
  
     if st.session_state.get("audio_to_play"):
         autoplay_audio(st.session_state.audio_to_play)
+        st.session_state.audio_to_play = None
 
     if st.session_state.get("coach_feedback"):
         st.markdown("")

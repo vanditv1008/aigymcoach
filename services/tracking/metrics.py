@@ -100,7 +100,7 @@ def sync_metrics_update(context):
             exercise=exercise,
             metrics={"issue": "No pose detected! Please step into the camera frame."},
         )
-    
+
         if result:
             st.session_state.audio_to_play, st.session_state.coach_feedback = result
 
