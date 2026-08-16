@@ -185,7 +185,6 @@ def main():
     st.markdown("#### Real-time pose detection with proactive AI voice coaching")
  
     if st.session_state.get("audio_to_play"):
-        autoplay_audio(st.session_state.audio_to_play)
         st.session_state.audio_to_play = None
 
     if st.session_state.get("coach_feedback"):
