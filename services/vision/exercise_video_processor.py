@@ -4,7 +4,6 @@ import av
 import numpy as np
 import mediapipe as mp
 import threading
-from streamlit_webrtc import VideoProcessorBase
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from detectors.squat import SquatDetector
@@ -15,7 +14,7 @@ from detectors.lunges import LungesDetector
 from services.config.workout_config import POSE_CONNECTIONS
 
 
-class VideoProcessorClass(VideoProcessorBase):
+class VideoProcessorClass:
     def __init__(self):
         self._lock = threading.Lock()
         self._latest_metrics = None
