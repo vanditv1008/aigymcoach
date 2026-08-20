@@ -2,11 +2,10 @@ import time
 import streamlit as st
 
 
-class VoicePipeline:
-    def __init__(self, llm, tts):
+class CoachingPipeline:
+    def __init__(self, llm):
         self.llm = llm
-        self.tts = tts
-        self.last_spoken_at = 0
+        self.last_feedback_at = 0
 
     def _find_form_issue(self, exercise, metrics):
         if "issue" in metrics:
@@ -74,20 +73,11 @@ class VoicePipeline:
             if not issue:
                 return None
             
-            if now - self.last_spoken_at < 5:
+            if now - self.last_feedback_at < 5:
                 return None
             
         text = self.llm.give_feedback(event, issue)
 
-        self.last_spoken_at = now
+        self.last_feedback_at = now
 
-        return None, text
-    
-
-def autoplay_audio(audio_bytes):
-    if not audio_bytes:
-        return
-    
-    st.markdown("<style>[data-testid='stAudio'] {display: none;}</style>", unsafe_allow_html=True)
-    
-    st.audio(audio_bytes, format="audio/mp3", autoplay=True)
+        return text

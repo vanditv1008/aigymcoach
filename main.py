@@ -15,10 +15,9 @@ from services.tracking.metrics import sync_metrics_update
 from services.persistence.exercise_repository import get_users_exercises
 from groq import Groq
 from services.coaching.llm import LLMCoach
-from services.coaching.tts import TextToSpeech
-from services.coaching.voice_pipeline import VoicePipeline, autoplay_audio
+from services.coaching.coaching_pipeline import CoachingPipeline
 
-  
+
 def main():
     st.set_page_config(
         page_icon="🏋️‍♀️",
@@ -48,7 +47,7 @@ def main():
 
     initial_session_defaults()
 
-    if "voice_pipeline" not in st.session_state:
+    if "coaching_pipeline" not in st.session_state:
         try:
             api_key = os.environ.get("GROQ_API_KEY", "")
 
@@ -56,14 +55,13 @@ def main():
                 api_key = st.secrets["GROQ_API_KEY"]
 
             if not api_key:
-                st.session_state.voice_pipeline = None
+                st.session_state.coaching_pipeline = None
             else:
                 groq_client = Groq(api_key=api_key)
                 llm_coach = LLMCoach(groq_client)
-                tts = TextToSpeech()
-                st.session_state.voice_pipeline = VoicePipeline(llm_coach, tts)
+                st.session_state.coaching_pipeline = CoachingPipeline(llm_coach)
         except Exception as e:
-            st.session_state.voice_pipeline = None
+            st.session_state.coaching_pipeline = None
 
     workout_started = st.session_state.get("workout_started", False)
     
@@ -97,15 +95,15 @@ def main():
                 st.session_state.set_cycle_started_at = time.time()
                 st.session_state.last_saved_sets_completed = 0
 
-                if st.session_state.voice_pipeline:
-                    result = st.session_state.voice_pipeline.process_event(
+                if st.session_state.coaching_pipeline:
+                    result = st.session_state.coaching_pipeline.process_event(
                         event="workout_started",
                         exercise=plan_exercise,
                         metrics={}
                     )
                     
                     if result:
-                        st.session_state.audio_to_play, st.session_state.coach_feedback = result
+                        st.session_state.coach_feedback = result
 
                 st.session_state.last_notified_sets_completed = 0
                 st.session_state.last_notified_workout_complete = False
@@ -122,14 +120,14 @@ def main():
             if end_session_button:
                 st.session_state.workout_started = False
                 
-                if st.session_state.voice_pipeline:
-                    result = st.session_state.voice_pipeline.process_event(
+                if st.session_state.coaching_pipeline:
+                    result = st.session_state.coaching_pipeline.process_event(
                         event="workout_completed",
                         exercise=exercise,
                         metrics={}
                     )
                     if result:
-                        st.session_state.audio_to_play, st.session_state.coach_feedback = result
+                        st.session_state.coach_feedback = result
 
                 st.rerun()
 
@@ -182,10 +180,7 @@ def main():
                 st.metric("Balance Status", st.session_state.balance_status)
 
     st.title("AI Real-time GYM Coach")
-    st.markdown("#### Real-time pose detection with proactive AI voice coaching")
- 
-    if st.session_state.get("audio_to_play"):
-        st.session_state.audio_to_play = None
+    st.markdown("#### Real-time pose detection with proactive AI text coaching")
 
     if st.session_state.get("coach_feedback"):
         st.markdown("")
