@@ -42,27 +42,30 @@ def init_db() -> None:
 
 def get_user(username: str) -> sqlite3.Row:
     conn = _get_connection()
+    clean_name = (username or "").strip()
 
     return conn.execute(
-        "SELECT * FROM users WHERE username = ?", (username,)
+        "SELECT * FROM users WHERE LOWER(username) = LOWER(?)", (clean_name,)
     ).fetchone()
 
 
 def create_user(username: str) -> sqlite3.Row:
     conn = _get_connection()
+    clean_name = (username or "").strip()
     
     with conn:
         conn.execute(
-            "INSERT INTO users (username) VALUES (?)", (username,)
+            "INSERT INTO users (username) VALUES (?)", (clean_name,)
         )
 
-    return get_user(username) 
+    return get_user(clean_name) 
 
 def get_or_create_user(username: str) -> sqlite3.Row:
-    user = get_user(username)
+    clean_name = (username or "").strip()
+    user = get_user(clean_name)
 
     if user is None:
-        user = create_user(username)
+        user = create_user(clean_name)
     
     return user
 
@@ -72,7 +75,7 @@ def add_exercise(user_id, exercise_name, reps, sets, time):
     with conn:
         existing = conn.execute("""
             SELECT * FROM exercises 
-            WHERE user_id = ? AND exercise_name = ? AND Date('created_at') = Date('now')
+            WHERE user_id = ? AND exercise_name = ? AND date(created_at) = date('now')
         """, (user_id, exercise_name)).fetchone()
 
         if existing:
@@ -83,9 +86,9 @@ def add_exercise(user_id, exercise_name, reps, sets, time):
             """, (reps, sets, time, existing['id']))
         else:
             conn.execute("""
-                INSERT INTO exercises (user_id, exercise_name, sets, reps, time)
+                INSERT INTO exercises (user_id, exercise_name, reps, sets, time)
                 VALUES (?, ?, ?, ?, ?)
-            """, (user_id, exercise_name, sets, reps, time))
+            """, (user_id, exercise_name, reps, sets, time))
 
 
 def get_users_exercises(user_id):
@@ -94,4 +97,5 @@ def get_users_exercises(user_id):
     return conn.execute("""
         SELECT * FROM exercises 
         WHERE user_id = ?
+        ORDER BY created_at DESC
     """, (user_id,)).fetchall()

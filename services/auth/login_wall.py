@@ -14,10 +14,11 @@ def render_login_wall():
         submit_button = st.form_submit_button("Start Session", width="stretch")
         
     if submit_button:
-        if not username:
+        clean_name = (username or "").strip()
+        if not clean_name:
             st.error("Please write your name.")
             return False      
-        user = get_or_create_user(username)  
+        user = get_or_create_user(clean_name)  
         st.session_state["user_id"] = user["id"]
         st.session_state["username"] = user["username"]
         st.rerun()

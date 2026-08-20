@@ -69,7 +69,13 @@ def main():
         st.title("🏋️‍♂️ Apna AI Coach")
 
         if st.session_state.username:
-            st.caption(f"👤 Login as {st.session_state.username}")
+            st.caption(f"👤 Logged in as **{st.session_state.username}**")
+            if st.button("Log Out", key="logout_button", width="stretch"):
+                st.session_state.pop("user_id", None)
+                st.session_state.pop("username", None)
+                st.session_state.pop("workout_started", None)
+                st.session_state.pop("coach_feedback", None)
+                st.rerun()
 
         st.divider()
 
@@ -232,9 +238,9 @@ def main():
 
     st.markdown("#### Workout History")
 
-    user_id = st.session_state.get("user_id", 0)
+    user_id = st.session_state.get("user_id")
 
-    if isinstance(user_id, int):
+    if user_id:
         history_rows = get_users_exercises(user_id)
 
         arr = [
@@ -242,7 +248,7 @@ def main():
                 "Exercise": row['exercise_name'],
                 "Reps": row['reps'],
                 "Sets": row['sets'],
-                "Time (sec)": row['time'],
+                "Time (sec)": int(row['time']),
                 "Date": row['created_at']
             }
             for row in history_rows
@@ -260,7 +266,7 @@ def main():
             agg_df.index += 1
             st.table(agg_df, border="horizontal")
         else:
-            st.info("No workout history found.")
+            st.info("No workout history found for your account.")
 
 
 if __name__ == "__main__":
